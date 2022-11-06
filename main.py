@@ -1,3 +1,5 @@
+import os
+import sys
 import psycopg2
 import flask
 from dataclasses import dataclass
@@ -46,4 +48,10 @@ def personsRoute():
         return resp
 
 port = 8080
+herokuPort = os.environ.get('PORT')
+if herokuPort != None:
+    port = herokuPort
+if len(sys.argv) > 1:
+    port = int(sys.argv[1])
+
 app.run(host="0.0.0.0", port=port)
