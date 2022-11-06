@@ -2,7 +2,7 @@ FROM python
 
 RUN pip install \
     flask \
-    psycopg2 \
+    psycopg2
 
 COPY . /app/
 
