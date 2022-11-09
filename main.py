@@ -78,7 +78,7 @@ def parsePersonRequest(request: Request) -> Union[PersonRequest, None]:
         work=request.json.get("work"),
     )
 
-# работает на локалхосте, но не в тестах
+# работает 
 def getOnePerson(id: int) -> Union[PersonResponse, None]:
     cursor.execute(
         'SELECT id, name, age, address, work FROM pers WHERE id = %s', (id,))
@@ -124,21 +124,19 @@ def patchPerson(id: int, person: PersonRequest) -> Union[PersonResponse, None]:
 def personsRoute():
     if flask.request.method == 'GET':
         persons = getPersons()
-        resp = flask.Response(arrToJson(persons))
+        resp = flask.Response(arrToJson(persons), status = 200)
         resp.headers['Content-Type'] = 'application/json'
         return resp
 
     elif flask.request.method == 'POST':
-            personRequest = parsePersonRequest(flask.request)
-            if personRequest == None:
-                errBody = ValidationErrorResponse(
-                    msg='Error while parsing person request', errors={'x': 'y'}).toJSON()
-                abort(404)
+        personRequest = parsePersonRequest(flask.request)
+        if personRequest == None:
+            abort(404)
 
-            newId = createNewPerson(personRequest)
-            resp = flask.Response('', status = 'HTTP_201_CREATED')
-            resp.headers['Location'] = f'/api/v1/persons/{newId}'
-            return resp
+        newId = createNewPerson(personRequest)
+        resp = flask.Response('', status = 201)
+        resp.headers['Location'] = f'/api/v1/persons/{newId}'
+        return resp
     else:
         abort(500)
 
@@ -152,7 +150,7 @@ def personRoute(id):
     if flask.request.method == 'GET':
         person = getOnePerson(int_id)
         if person != None:
-            resp = flask.Response(person.toJSON())
+            resp = flask.Response(person.toJSON(), status = 200)
             resp.headers['Content-Type'] = 'application/json'
             return resp
         else:
@@ -161,8 +159,6 @@ def personRoute(id):
     elif flask.request.method == 'PATCH':
         personRequest = parsePersonRequest(flask.request)
         if personRequest == None:
-            errBody = ValidationErrorResponse(
-                msg='Error while parsing person request', errors={'x': 'y'}).toJSON()
             abort(404)
 
         person = patchPerson(int_id, personRequest)
@@ -180,15 +176,9 @@ def personRoute(id):
 
     elif flask.request.method == 'DELETE':
         removePerson(int_id)
-        #abort(404)
-        #return flask.Response('', status.HTTP_204_NO_CONTENT)
 
     else:
         abort(404)
-        #return flask.Response(
-        #    ErrorResponse(msg='Smth went wrong: unexpected method').toJSON(),
-        #    status.HTTP_500_INTERNAL_SERVER_ERROR,
-        #)
 
 port = 8080
 herokuPort = os.environ.get('PORT')
