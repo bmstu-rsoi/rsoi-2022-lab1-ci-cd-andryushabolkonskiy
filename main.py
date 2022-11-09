@@ -10,6 +10,7 @@ from flask import abort
 from dataclasses import dataclass
 from typing import Dict, List, Union
 
+#Подключение к БД --- ОК
 conn = psycopg2.connect(dbname='d1197oq2du464e', user='ifbyzhwjgemnpe', 
                         password='071231d4f79ca1acfabd3e80971b37ab6ef12bd36d8ed4ac2cdcfe5eb0bcacd8', host='ec2-3-219-135-162.compute-1.amazonaws.com')
 
@@ -17,14 +18,14 @@ cursor = conn.cursor()
 
 app = flask.Flask(__name__)
 
-def cleanNones(o):
-    return {k: v for k,
-            v in o.__dict__.items() if v is not None}
-
 class ApiMessage:
     def toJSON(obj):
         return json.dumps(obj, separators=(',', ':'),
                           default=cleanNones)
+
+def cleanNones(o):
+    return {k: v for k,
+            v in o.__dict__.items() if v is not None}
 
 def arrToJson(arr: List[ApiMessage]):
     return json.dumps([cleanNones(e) for e in arr], separators=(',', ':'))
@@ -41,8 +42,6 @@ def getPersons() -> List[PersonResponse]:
     cursor.execute('SELECT id, name, age, address, work FROM pers')
     persons_data = [PersonResponse(*e) for e in cursor]
     return persons_data
-
-#########
 
 @dataclass
 class ErrorResponse(ApiMessage):
@@ -79,6 +78,7 @@ def parsePersonRequest(request: Request) -> Union[PersonRequest, None]:
         work=request.json.get("work"),
     )
 
+# работает на локалхосте, но не в тестах
 def getOnePerson(id: int) -> Union[PersonResponse, None]:
     cursor.execute(
         'SELECT id, name, age, address, work FROM pers WHERE id = %s', (id,))
@@ -119,6 +119,7 @@ def patchPerson(id: int, person: PersonRequest) -> Union[PersonResponse, None]:
 
     return getOnePerson(id)
 
+# Получить инфу обо всех записях --- ОК
 @app.route('/api/v1/persons', methods=['GET', 'POST'])
 def personsRoute():
     if flask.request.method == 'GET':
@@ -132,10 +133,6 @@ def personRoute(id):
     int_id = parseInt32(id)
     if int_id == None:
         abort(404)
-            #return flask.Response(
-            #ErrorResponse(msg=f'Wrong id format: `{id}`').toJSON(),
-            #status.HTTP_404_NOT_FOUND,
-        #)
 
     if flask.request.method == 'GET':
         person = getOnePerson(int_id)
@@ -145,10 +142,6 @@ def personRoute(id):
             return resp
         else:
             abort(404)
-                #return flask.Response(
-                #ErrorResponse(msg=f'There is no person with id {id}').toJSON(),
-                #status.HTTP_404_NOT_FOUND,
-            #)
 
     elif flask.request.method == 'PATCH':
         personRequest = parsePersonRequest(flask.request)
@@ -156,11 +149,10 @@ def personRoute(id):
             errBody = ValidationErrorResponse(
                 msg='Error while parsing person request', errors={'x': 'y'}).toJSON()
             abort(404)
-            #return flask.Response(errBody, status.HTTP_404_NOT_FOUND)
 
         person = patchPerson(int_id, personRequest)
         if person != None:
-            abort(404)
+            abort(200)
             #resp = flask.Response(person.toJSON(), status.HTTP_200_OK)
             #resp.headers['Content-Type'] = 'application/json'
             #return resp
@@ -173,7 +165,7 @@ def personRoute(id):
 
     elif flask.request.method == 'DELETE':
         removePerson(int_id)
-        abort(404)
+        #abort(404)
         #return flask.Response('', status.HTTP_204_NO_CONTENT)
 
     else:
