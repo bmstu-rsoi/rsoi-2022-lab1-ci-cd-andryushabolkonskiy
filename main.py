@@ -5,8 +5,8 @@ import flask
 import json
 
 from urllib.request import Request
-from api_messages import *
-from flask_api import status
+#from api_messages import *
+from flask import abort
 from dataclasses import dataclass
 from typing import Dict, List, Union
 
@@ -60,6 +60,25 @@ class PersonRequest(ApiMessage):
     address: Union[str, None]
     work: Union[str, None]
 
+def parseInt32(s: str):
+    try:
+        val = int(s)
+    except:
+        return None
+    return val
+
+def parsePersonRequest(request: Request) -> Union[PersonRequest, None]:
+    if not request.is_json:
+        return None
+    if request.json.get("name", None) == None:
+        return None
+    return PersonRequest(
+        name=request.json.get("name"),
+        age=request.json.get("age"),
+        address=request.json.get("address"),
+        work=request.json.get("work"),
+    )
+
 def getOnePerson(id: int) -> Union[PersonResponse, None]:
     cursor.execute(
         'SELECT id, name, age, address, work FROM pers WHERE id = %s', (id,))
@@ -100,8 +119,6 @@ def patchPerson(id: int, person: PersonRequest) -> Union[PersonResponse, None]:
 
     return getOnePerson(id)
 
-##########
-
 @app.route('/api/v1/persons', methods=['GET', 'POST'])
 def personsRoute():
     if flask.request.method == 'GET':
@@ -110,34 +127,15 @@ def personsRoute():
         resp.headers['Content-Type'] = 'application/json'
         return resp
 
-def parseInt32(s: str):
-    try:
-        val = int(s)
-    except:
-        return None
-    return val
-
-def parsePersonRequest(request: Request) -> Union[PersonRequest, None]:
-    if not request.is_json:
-        return None
-    if request.json.get("name", None) == None:
-        return None
-    return PersonRequest(
-        name=request.json.get("name"),
-        age=request.json.get("age"),
-        address=request.json.get("address"),
-        work=request.json.get("work"),
-    )
-
-
 @app.route('/api/v1/persons/<id>', methods=['GET', 'PATCH', 'DELETE'])
 def personRoute(id):
     int_id = parseInt32(id)
     if int_id == None:
-        return flask.Response(
-            ErrorResponse(msg=f'Wrong id format: `{id}`').toJSON(),
-            status.HTTP_404_NOT_FOUND,
-        )
+        abort(404)
+            #return flask.Response(
+            #ErrorResponse(msg=f'Wrong id format: `{id}`').toJSON(),
+            #status.HTTP_404_NOT_FOUND,
+        #)
 
     if flask.request.method == 'GET':
         person = getOnePerson(int_id)
@@ -146,38 +144,44 @@ def personRoute(id):
             resp.headers['Content-Type'] = 'application/json'
             return resp
         else:
-            return flask.Response(
-                ErrorResponse(msg=f'There is no person with id {id}').toJSON(),
-                status.HTTP_404_NOT_FOUND,
-            )
+            abort(404)
+                #return flask.Response(
+                #ErrorResponse(msg=f'There is no person with id {id}').toJSON(),
+                #status.HTTP_404_NOT_FOUND,
+            #)
 
     elif flask.request.method == 'PATCH':
         personRequest = parsePersonRequest(flask.request)
         if personRequest == None:
             errBody = ValidationErrorResponse(
                 msg='Error while parsing person request', errors={'x': 'y'}).toJSON()
-            return flask.Response(errBody, status.HTTP_400_BAD_REQUEST)
+            abort(404)
+            #return flask.Response(errBody, status.HTTP_404_NOT_FOUND)
 
         person = patchPerson(int_id, personRequest)
         if person != None:
-            resp = flask.Response(person.toJSON(), status.HTTP_200_OK)
-            resp.headers['Content-Type'] = 'application/json'
-            return resp
+            abort(404)
+            #resp = flask.Response(person.toJSON(), status.HTTP_200_OK)
+            #resp.headers['Content-Type'] = 'application/json'
+            #return resp
         else:
-            return flask.Response(
-                ErrorResponse(msg=f'There is no person with id {id}').toJSON(),
-                status.HTTP_404_NOT_FOUND,
-            )
+            abort(404)
+            #return flask.Response(
+            #    ErrorResponse(msg=f'There is no person with id {id}').toJSON(),
+            #    status.HTTP_404_NOT_FOUND,
+            #)
 
     elif flask.request.method == 'DELETE':
         removePerson(int_id)
-        return flask.Response('', status.HTTP_204_NO_CONTENT)
+        abort(404)
+        #return flask.Response('', status.HTTP_204_NO_CONTENT)
 
     else:
-        return flask.Response(
-            ErrorResponse(msg='Smth went wrong: unexpected method').toJSON(),
-            status.HTTP_500_INTERNAL_SERVER_ERROR,
-        )
+        abort(404)
+        #return flask.Response(
+        #    ErrorResponse(msg='Smth went wrong: unexpected method').toJSON(),
+        #    status.HTTP_500_INTERNAL_SERVER_ERROR,
+        #)
 
 port = 8080
 herokuPort = os.environ.get('PORT')
