@@ -128,6 +128,21 @@ def personsRoute():
         resp.headers['Content-Type'] = 'application/json'
         return resp
 
+    elif flask.request.method == 'POST':
+            personRequest = parsePersonRequest(flask.request)
+            if personRequest == None:
+                errBody = ValidationErrorResponse(
+                    msg='Error while parsing person request', errors={'x': 'y'}).toJSON()
+                abort(404)
+
+            newId = createNewPerson(personRequest)
+            resp = flask.Response('', status = 'HTTP_201_CREATED')
+            resp.headers['Location'] = f'/api/v1/persons/{newId}'
+            return resp
+    else:
+        abort(500)
+
+
 @app.route('/api/v1/persons/<id>', methods=['GET', 'PATCH', 'DELETE'])
 def personRoute(id):
     int_id = parseInt32(id)
