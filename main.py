@@ -179,7 +179,7 @@ def personRoute(id):
 
     elif flask.request.method == 'DELETE':
         removePerson(int_id)
-        return flask.Response('', status = 204)
+        return flask.Response('', status = '204')
 
 
     else:
