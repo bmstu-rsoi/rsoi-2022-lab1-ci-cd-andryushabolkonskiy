@@ -30,35 +30,6 @@ def cleanNones(o):
 def arrToJson(arr: List[ApiMessage]):
     return json.dumps([cleanNones(e) for e in arr], separators=(',', ':'))
 
-@dataclass
-class PersonResponse(ApiMessage):
-    id: int
-    name: str
-    age: Union[int, None]
-    address: Union[str, None]
-    work: Union[str, None]
-
-def getPersons() -> List[PersonResponse]:
-    cursor.execute('SELECT id, name, age, address, work FROM pers')
-    persons_data = [PersonResponse(*e) for e in cursor]
-    return persons_data
-
-@dataclass
-class ErrorResponse(ApiMessage):
-    msg: str
-
-@dataclass
-class ValidationErrorResponse(ApiMessage):
-    msg: str
-    errors: Dict[str, str]
-
-@dataclass
-class PersonRequest(ApiMessage):
-    name: str
-    age: Union[int, None]
-    address: Union[str, None]
-    work: Union[str, None]
-
 def parseInt32(s: str):
     try:
         val = int(s)
@@ -77,6 +48,35 @@ def parsePersonRequest(request: Request) -> Union[PersonRequest, None]:
         address=request.json.get("address"),
         work=request.json.get("work"),
     )
+
+@dataclass
+class PersonResponse(ApiMessage):
+    id: int
+    name: str
+    age: Union[int, None]
+    address: Union[str, None]
+    work: Union[str, None]
+
+@dataclass
+class ErrorResponse(ApiMessage):
+    msg: str
+
+@dataclass
+class ValidationErrorResponse(ApiMessage):
+    msg: str
+    errors: Dict[str, str]
+
+@dataclass
+class PersonRequest(ApiMessage):
+    name: str
+    age: Union[int, None]
+    address: Union[str, None]
+    work: Union[str, None]
+
+def getPersons() -> List[PersonResponse]:
+    cursor.execute('SELECT id, name, age, address, work FROM pers')
+    persons_data = [PersonResponse(*e) for e in cursor]
+    return persons_data
 
 # работает 
 def getOnePerson(id: int) -> Union[PersonResponse, None]:
@@ -124,14 +124,14 @@ def patchPerson(id: int, person: PersonRequest) -> Union[PersonResponse, None]:
 def personsRoute():
     if flask.request.method == 'GET':
         persons = getPersons()
-        resp = flask.Response(arrToJson(persons), status = 200)
+        resp = flask.Response(arrToJson(persons))
         resp.headers['Content-Type'] = 'application/json'
         return resp
 
     elif flask.request.method == 'POST':
         personRequest = parsePersonRequest(flask.request)
         if personRequest == None:
-            abort(404)
+            abort(400)
 
         newId = createNewPerson(personRequest)
         resp = flask.Response('', status = 201)
@@ -163,7 +163,9 @@ def personRoute(id):
 
         person = patchPerson(int_id, personRequest)
         if person != None:
-            abort(200)
+            resp = flask.Response(person.toJSON(), status = 200)
+            resp.headers['Content-Type'] = 'application/json'
+            #abort(200)
             #resp = flask.Response(person.toJSON(), status.HTTP_200_OK)
             #resp.headers['Content-Type'] = 'application/json'
             #return resp
@@ -176,9 +178,11 @@ def personRoute(id):
 
     elif flask.request.method == 'DELETE':
         removePerson(int_id)
+        return flask.Response('', status = 204)
+
 
     else:
-        abort(404)
+        abort(500)
 
 port = 8080
 herokuPort = os.environ.get('PORT')
