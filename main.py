@@ -157,6 +157,7 @@ def personRoute(id):
         else:
             abort(404)
 
+    #  не работает раз
     elif flask.request.method == 'PATCH':
         personRequest = parsePersonRequest(flask.request)
         if personRequest == None:
@@ -177,13 +178,15 @@ def personRoute(id):
             #    status.HTTP_404_NOT_FOUND,
             #)
 
-    elif flask.request.method == 'DELETE':
+    # не работает два
+    else:
+        #flask.request.method == 'DELETE':
         removePerson(int_id)
         return flask.Response('', status = '204')
 
 
-    else:
-        abort(500)
+    #else:
+    #    abort(500)
 
 port = 8080
 herokuPort = os.environ.get('PORT')
