@@ -124,11 +124,12 @@ def patchPerson(id: int, person: PersonRequest) -> Union[PersonResponse, None]:
 def personsRoute():
     if flask.request.method == 'GET':
         persons = getPersons()
-        resp = flask.Response(arrToJson(persons))
+        resp = flask.Response(arrToJson(persons), status = 200)
         resp.headers['Content-Type'] = 'application/json'
         return resp
 
-    elif flask.request.method == 'POST':
+    else:
+        #flask.request.method == 'POST':
         personRequest = parsePersonRequest(flask.request)
         if personRequest == None:
             abort(400)
@@ -137,8 +138,8 @@ def personsRoute():
         resp = flask.Response('', status = 201)
         resp.headers['Location'] = f'/api/v1/persons/{newId}'
         return resp
-    else:
-        abort(500)
+    #else:
+    #    abort(500)
 
 
 @app.route('/api/v1/persons/<id>', methods=['GET', 'PATCH', 'DELETE'])
@@ -150,7 +151,7 @@ def personRoute(id):
     if flask.request.method == 'GET':
         person = getOnePerson(int_id)
         if person != None:
-            resp = flask.Response(person.toJSON(), status = 200)
+            resp = flask.Response(person.toJSON(), status = '200')
             resp.headers['Content-Type'] = 'application/json'
             return resp
         else:
@@ -163,14 +164,14 @@ def personRoute(id):
 
         person = patchPerson(int_id, personRequest)
         if person != None:
-            resp = flask.Response(person.toJSON(), status = 200)
+            resp = flask.Response(person.toJSON(), status = '200')
             resp.headers['Content-Type'] = 'application/json'
             #abort(200)
             #resp = flask.Response(person.toJSON(), status.HTTP_200_OK)
             #resp.headers['Content-Type'] = 'application/json'
             #return resp
-        else:
-            abort(404)
+        #else:
+            #abort(404)
             #return flask.Response(
             #    ErrorResponse(msg=f'There is no person with id {id}').toJSON(),
             #    status.HTTP_404_NOT_FOUND,
