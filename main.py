@@ -110,7 +110,7 @@ def patchPerson(id: int, person: PersonRequest) -> Union[PersonResponse, None]:
     if person.work != None:
         params.append(person.work)
     params.append(id)
-    cursor.execute('UPDATE persons SET name = %s' +
+    cursor.execute('UPDATE pers SET name = %s' +
                     (', age = %s' if person.age != None else '') +
                     (', address = %s' if person.address != None else '') +
                     (', work = %s' if person.work != None else '') +
@@ -135,6 +135,7 @@ def personsRoute():
             abort(400)
 
         newId = createNewPerson(personRequest)
+        #print(newId)
         resp = flask.Response('', status = 201)
         resp.headers['Location'] = f'/api/v1/persons/{newId}'
         return resp
@@ -180,6 +181,7 @@ def personRoute(id):
 
     # не работает два
     else:
+        #print("AAAAAAAAAAAAAAAAAAAAAAAAAA")
         #flask.request.method == 'DELETE':
         removePerson(int_id)
         return flask.Response('', status = '204')
