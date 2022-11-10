@@ -146,8 +146,8 @@ def personsRoute():
 @app.route('/api/v1/persons/<id>', methods=['GET', 'PATCH', 'DELETE'])
 def personRoute(id):
     int_id = parseInt32(id)
-    if int_id == None:
-        abort(404)
+    #if int_id == None:
+    #    abort(404)
 
     if flask.request.method == 'GET':
         person = getOnePerson(int_id)
@@ -155,40 +155,28 @@ def personRoute(id):
             resp = flask.Response(person.toJSON(), status = '200')
             resp.headers['Content-Type'] = 'application/json'
             return resp
-        else:
-            abort(404)
+        
 
     #  не работает раз
     elif flask.request.method == 'PATCH':
         personRequest = parsePersonRequest(flask.request)
         if personRequest == None:
-            abort(404)
+            resp = flask.Response('', status = '404')
+            return resp
 
         person = patchPerson(int_id, personRequest)
         if person != None:
             resp = flask.Response(person.toJSON(), status = '200')
             resp.headers['Content-Type'] = 'application/json'
-            #abort(200)
-            #resp = flask.Response(person.toJSON(), status.HTTP_200_OK)
-            #resp.headers['Content-Type'] = 'application/json'
-            #return resp
-        #else:
-            #abort(404)
-            #return flask.Response(
-            #    ErrorResponse(msg=f'There is no person with id {id}').toJSON(),
-            #    status.HTTP_404_NOT_FOUND,
-            #)
+            return resp
 
     # не работает два
     else:
-        #print("AAAAAAAAAAAAAAAAAAAAAAAAAA")
         #flask.request.method == 'DELETE':
         removePerson(int_id)
         return flask.Response('', status = '204')
 
 
-    #else:
-    #    abort(500)
 
 port = 8080
 herokuPort = os.environ.get('PORT')
