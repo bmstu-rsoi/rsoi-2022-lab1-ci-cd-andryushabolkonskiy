@@ -37,6 +37,13 @@ def parseInt32(s: str):
         return None
     return val
 
+@dataclass
+class PersonRequest(ApiMessage):
+    name: str
+    age: Union[int, None]
+    address: Union[str, None]
+    work: Union[str, None]
+
 def parsePersonRequest(request: Request) -> Union[PersonRequest, None]:
     if not request.is_json:
         return None
@@ -65,13 +72,6 @@ class ErrorResponse(ApiMessage):
 class ValidationErrorResponse(ApiMessage):
     msg: str
     errors: Dict[str, str]
-
-@dataclass
-class PersonRequest(ApiMessage):
-    name: str
-    age: Union[int, None]
-    address: Union[str, None]
-    work: Union[str, None]
 
 def getPersons() -> List[PersonResponse]:
     cursor.execute('SELECT id, name, age, address, work FROM pers')
